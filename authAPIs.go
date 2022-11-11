@@ -17,8 +17,8 @@ type Credentials struct {
 	Password string `validate:"required,min=6,max=32"`
 }
 type Profile struct {
-	FirstName string `validate:"omitempty"`
-	LastName  string `validate:"omitempty"`
+	FirstName string 
+	LastName  string 
 	Gender    string
 }
 

@@ -21,8 +21,8 @@ type EmailStruct struct{
 type Account struct{
 	Email    []EmailStruct `validate:"required"`
 	Password string `validate:"required,min=6,max=32"`
-	FirstName string `validate:"omitempty"`
-	LastName  string `validate:"omitempty"`
+	FirstName string 
+	LastName  string 
 	Gender    string
 	EmailVerified bool 
 }

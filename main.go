@@ -19,8 +19,6 @@ var ErrorHandler = func(ctx *fiber.Ctx, err error) error {
 }
 
 func main() {
-
-	
 	app := fiber.New(fiber.Config{
 		ErrorHandler: ErrorHandler})
 	app.Post("/login", LoginHandler)
