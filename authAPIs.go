@@ -30,7 +30,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	fmt.Println("inside login handler")
 	credentials := new(Credentials)
 	if err := c.BodyParser(credentials); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+		return requestMalformed(c,err)
 	}
 	validate := validator.New()
 	if err := validate.Struct(credentials); err != nil {
@@ -38,9 +38,13 @@ func LoginHandler(c *fiber.Ctx) error {
 	}
 
 	base, _ := url.Parse(authURL)
-	fmt.Println("apikey", c.Query("apikey"))
+	apikey := c.Query("apikey")
+	fmt.Println("apikey", apikey)
+	if apikey == ""{
+		return ApiKeyMissing(c)	
+	}
 	params := url.Values{}
-	params.Add("apikey", c.Query("apikey"))
+	params.Add("apikey", apikey)
 	base.RawQuery = params.Encode()
 	fmt.Println(base)
 	body, err := json.Marshal(map[string]string{
@@ -55,15 +59,17 @@ func LoginHandler(c *fiber.Ctx) error {
 	}
 	result, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	c.Set("content-type", "application/json")
-	return c.Status(fiber.StatusOK).Send(result)
+	return okResponse(c,result)
 }
 
 func UpdateProfileHandler(c *fiber.Ctx) error {
 	fmt.Println("inside update profile handler")
 	profile := new(Profile)
 	if err := c.BodyParser(profile); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"Message": err.Error()})
+		return requestMalformed(c,err)
+	}
+	if(*profile == (Profile{})){
+		return missingBody(c)
 	}
 	fmt.Println(profile)
 	validate := validator.New()
@@ -71,10 +77,17 @@ func UpdateProfileHandler(c *fiber.Ctx) error {
 	base, _ := url.Parse(updateAccountURL)
 	fmt.Println(base)
 	params := url.Values{}
-	params.Add("apikey", c.Query("apikey"))
+	apikey := c.Query("apikey")
+	if apikey ==""{
+		return ApiKeyMissing(c)
+	}
+	params.Add("apikey",apikey) 
 	headers := c.GetReqHeaders()
 	fmt.Println("header", headers)
 	token := headers["Authorization"]
+	if token ==""{
+		return Unauthorized(c)
+	}
 	base.RawQuery = params.Encode()
 	body, _ := json.Marshal(profile)
 	req, _ := http.NewRequest(http.MethodPut, base.String(), bytes.NewBuffer(body))
@@ -87,7 +100,6 @@ func UpdateProfileHandler(c *fiber.Ctx) error {
 	}
 	result, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	c.Set("content-type", "application/json")
-	return c.Status(fiber.StatusOK).Send(result)
+	return okResponse(c, result)
 
 }
